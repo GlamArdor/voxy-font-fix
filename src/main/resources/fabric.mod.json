@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "voxyfontfix",
+  "version": "${version}",
+  "name": "Voxy Font Fix",
+  "description": "Fixes the glyphs that vanish or turn into coloured noise after a resource pack load when Voxy is installed – Cyrillic first of all, because those glyphs are baked lazily while Voxy is still working. Voxy binds its textures through glBindTextureUnit, which bypasses GlStateManager's binding cache, so vanilla's next glyph upload silently lands on somebody else's texture. This mod puts the real OpenGL state back in agreement with what the game believes is bound.",
+  "authors": [
+    "Glam_Ardor"
+  ],
+  "contact": {
+    "sources": "https://codeberg.org/Glam_Ardor/voxy-font-fix",
+    "issues": "https://codeberg.org/Glam_Ardor/voxy-font-fix/issues"
+  },
+  "license": "LGPL-3.0-or-later",
+  "icon": "assets/voxyfontfix/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.glamardor.voxyfontfix.VoxyFontFix"
+    ]
+  },
+  "mixins": [
+    "voxyfontfix.mixins.json"
+  ],
+  "accessWidener": "voxyfontfix.accesswidener",
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.8",
+    "java": ">=21"
+  }
+}
