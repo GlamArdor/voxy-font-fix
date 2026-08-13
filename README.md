@@ -5,9 +5,8 @@ installed: letters that disappear after a resource pack load, or come back as a 
 noise. Cyrillic suffers the most, and reloading the pack fixes it only sometimes. Nothing is ever
 logged, because from OpenGL's point of view nothing went wrong.
 
-> **Status: still being tested.** The mod loads clean and leaves no GL errors behind on a dev
-> client, but it has not had a long run alongside Voxy itself yet, so problems are possible. Please
-> report anything you run into in the issues.
+> **Status:** 1.1.0 has been run alongside Voxy on a live server and the reported symptoms are gone.
+> It is still a young mod, so please report anything you run into in the issues.
 
 ## What actually happens
 
