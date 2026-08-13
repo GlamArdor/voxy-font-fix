@@ -21,6 +21,7 @@ public class GameRendererMixin {
 
 	@Inject(method = "renderWorld", at = @At("RETURN"))
 	private void voxyfontfix$resyncAfterWorld(RenderTickCounter tickCounter, CallbackInfo ci) {
+		GlStateGuard.auditBindings("after world");
 		GlStateGuard.resyncTextureUnits();
 	}
 }

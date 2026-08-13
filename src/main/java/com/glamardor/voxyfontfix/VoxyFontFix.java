@@ -5,7 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class VoxyFontFix implements ClientModInitializer {
-	private static final Logger LOGGER = LoggerFactory.getLogger("voxyfontfix");
+	static final Logger LOGGER = LoggerFactory.getLogger("voxyfontfix");
 
 	@Override
 	public void onInitializeClient() {

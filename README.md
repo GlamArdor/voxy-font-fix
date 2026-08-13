@@ -47,16 +47,45 @@ before Voxy's bakery runs. Cyrillic comes from the lazily loaded unihex provider
 are baked later, during gameplay, exactly when Voxy is free to trample the binding. And that is also
 why a pack reload fixes it *sometimes* – it is a race, not a deterministic failure.
 
+## The red inventory
+
+The same stale cache breaks reads as well as writes, and that one is easier to see: after a resource
+pack load every item sprite in the inventory and the hotbar turns red, until you reload the pack with
+F3+T. Items lying on the ground, items in your hand and flat GUI sprites are all fine.
+
+Vanilla binds a shader's samplers through the very same cache:
+
+```java
+GlStateManager._activeTexture(GL_TEXTURE0 + samplerIndex);   // cached
+GlStateManager._bindTexture(glTexture.glId);                 // cached -> may be skipped
+```
+
+When Voxy has left one of its own textures on that unit, the bind is skipped and the GUI item shader
+samples Voxy's texture where the lightmap should be. The item's colour gets multiplied by whatever
+colour sits in the foreign texture, which is why the sprites keep their exact shape and alpha and
+only lose their green and blue channels. The world is drawn through paths that rebind every frame, so
+it stays correct, and flat GUI sprites never sample the lightmap at all.
+
+F3+T helps because reloading resources recreates the textures with new ids: the cache stops matching
+and the bind happens for real. When the ids happen to line up again, it does not help – hence "only
+sometimes".
+
 ## What the fix does
 
-It never touches Voxy. It makes the real GL state agree with what the game believes, at three points:
+It never touches Voxy. It makes the real GL state agree with what the game believes:
 
+* **On every bind.** `_activeTexture` and `_bindTexture` issue the driver call they would otherwise
+  skip, and drop any sampler object left on the unit. The originals still run and still update the
+  cache, so nothing downstream changes – except the bindings are now correct even after a mod has
+  bound something behind the cache's back.
 * **Before every texture upload** (`GlCommandEncoder.writeToTexture`, both overloads) the destination
-  texture is bound for real, and any leftover sampler object is dropped from the active unit. Then
-  `_bindTexture` is called so the cache and the driver end up agreeing either way.
+  texture is bound for real, and any leftover sampler object is dropped from the active unit.
 * **At the start of each frame** and **right after the world is drawn** – which is where Voxy renders
-  – every texture unit is put back to the binding `GlStateManager` assumes it has. Twelve units,
-  three GL calls each, twice a frame.
+  – every texture unit is put back to the binding `GlStateManager` assumes it has.
+
+Start the game with `-Dvoxyfontfix.audit=true` to have the mod log any unit where the driver and the
+cache disagree, at most once per second. It is off by default because reading GL state back stalls
+the pipeline.
 
 The same desync is what breaks other things that bind outside `GlStateManager`, so the fix is written
 against vanilla only: no dependency on Voxy, no mixin into it, nothing to update when Voxy changes.

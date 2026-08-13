@@ -60,6 +60,50 @@ public final class GlStateGuard {
 	}
 
 	/**
+	 * Called before {@code GlStateManager._activeTexture} decides whether the switch is needed.
+	 *
+	 * <p>Voxy calls {@code glActiveTexture} directly, so the cached unit can be a lie. Issuing the
+	 * switch unconditionally costs one cheap driver call and makes the cache correct by construction:
+	 * whatever the original does afterwards, the driver is already on the unit vanilla wants.
+	 */
+	public static void enforceActiveUnit(int texture) {
+		if (!RenderSystem.isOnRenderThread()) {
+			return;
+		}
+
+		GL13.glActiveTexture(texture);
+	}
+
+	/**
+	 * Called before {@code GlStateManager._bindTexture} decides whether the bind is needed.
+	 *
+	 * <p>This is the read-side counterpart of {@link #enforceUploadTarget}. When Voxy has bound one of
+	 * its own textures onto a unit with {@code glBindTextureUnit}, the cache still names the texture
+	 * vanilla put there last, so the bind is skipped and the shader samples Voxy's texture instead.
+	 * In the GUI item pass that unit is the lightmap, and every item ends up multiplied by whatever
+	 * colour sits in the foreign texture — the whole inventory turns red while the world, drawn
+	 * through paths that rebind every frame, stays correct.
+	 *
+	 * <p>Nothing here touches the cache: the original call runs right after and either agrees with the
+	 * driver or repeats a bind that is already in place.
+	 */
+	public static void enforceBind(int texture) {
+		if (!RenderSystem.isOnRenderThread()) {
+			return;
+		}
+
+		// The unit itself may be stale, so land on the one GlStateManager is about to record into.
+		int activeUnit = GlStateManager._getActiveTexture();
+		GL13.glActiveTexture(activeUnit);
+
+		// Vanilla never binds sampler objects and never clears them either, so a sampler Voxy left on
+		// this unit would keep overriding the texture's own filter and wrap settings.
+		GL33.glBindSampler(activeUnit - GL13.GL_TEXTURE0, 0);
+
+		GL11.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+	}
+
+	/**
 	 * Puts every texture unit back to the binding GlStateManager assumes it has. Cheap enough to run
 	 * a couple of times per frame: twelve units, three calls each.
 	 */
@@ -84,4 +128,50 @@ public final class GlStateGuard {
 
 		GL13.glActiveTexture(GlStateManager._getActiveTexture());
 	}
+
+	/**
+	 * Reports units where the driver disagrees with GlStateManager, so a report can name the culprit
+	 * instead of guessing. Off unless the game is started with {@code -Dvoxyfontfix.audit=true},
+	 * because reading GL state back forces a pipeline stall.
+	 */
+	public static void auditBindings(String where) {
+		if (!AUDIT || !RenderSystem.isOnRenderThread()) {
+			return;
+		}
+
+		long now = System.nanoTime();
+		if (now - lastAudit < 1_000_000_000L) {
+			return;
+		}
+		lastAudit = now;
+
+		GlStateManager.Texture2DState[] units = GlStateManager.TEXTURES;
+		StringBuilder report = null;
+		for (int unit = 0; unit < units.length; unit++) {
+			GL13.glActiveTexture(GL13.GL_TEXTURE0 + unit);
+			int realTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+			int realSampler = GL11.glGetInteger(GL33.GL_SAMPLER_BINDING);
+			int cached = units[unit].boundTexture;
+
+			if (realTexture != cached || realSampler != 0) {
+				if (report == null) {
+					report = new StringBuilder("state desync at ").append(where).append(':');
+				}
+				report.append(" [unit ").append(unit)
+						.append(" cached=").append(cached)
+						.append(" real=").append(realTexture)
+						.append(" sampler=").append(realSampler)
+						.append(']');
+			}
+		}
+
+		GL13.glActiveTexture(GlStateManager._getActiveTexture());
+
+		if (report != null) {
+			VoxyFontFix.LOGGER.warn(report.toString());
+		}
+	}
+
+	private static final boolean AUDIT = Boolean.getBoolean("voxyfontfix.audit");
+	private static long lastAudit;
 }
