@@ -14,8 +14,8 @@ import org.lwjgl.opengl.GL33;
  *
  * <p>GlStateManager caches the bound texture per texture unit and turns {@code _bindTexture} into a
  * no-op whenever the cache already holds the requested id. Voxy binds its textures with
- * {@code glBindTextureUnit} and {@code glBindSampler} — direct state access calls that never pass
- * through GlStateManager — so after Voxy has baked its block models the cache is a lie: it claims
+ * {@code glBindTextureUnit} and {@code glBindSampler} – direct state access calls that never pass
+ * through GlStateManager – so after Voxy has baked its block models the cache is a lie: it claims
  * unit 0 still holds texture A while the driver actually holds the block atlas.
  *
  * <p>The next vanilla texture upload then skips its bind and {@code glTexSubImage2D} writes into
@@ -53,8 +53,8 @@ public final class GlStateGuard {
 		int id = glTexture.getGlId();
 		GL11.glBindTexture(GL11.GL_TEXTURE_2D, id);
 
-		// Now make the cache agree. Either it already holds this id — in which case the binding we
-		// just did is exactly what it assumed — or it rebinds the very same texture and records it.
+		// Now make the cache agree. Either it already holds this id – in which case the binding we
+		// just did is exactly what it assumed – or it rebinds the very same texture and records it.
 		// Both paths end with cache and driver in agreement.
 		GlStateManager._bindTexture(id);
 	}
@@ -81,7 +81,7 @@ public final class GlStateGuard {
 	 * its own textures onto a unit with {@code glBindTextureUnit}, the cache still names the texture
 	 * vanilla put there last, so the bind is skipped and the shader samples Voxy's texture instead.
 	 * In the GUI item pass that unit is the lightmap, and every item ends up multiplied by whatever
-	 * colour sits in the foreign texture — the whole inventory turns red while the world, drawn
+	 * colour sits in the foreign texture – the whole inventory turns red while the world, drawn
 	 * through paths that rebind every frame, stays correct.
 	 *
 	 * <p>Nothing here touches the cache: the original call runs right after and either agrees with the

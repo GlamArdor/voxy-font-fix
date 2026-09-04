@@ -9,8 +9,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Two sync points per frame: one before anything is drawn, and one right after the world — which is
- * where Voxy renders — so the HUD and the chat start from a state the game actually agrees with.
+ * Two sync points per frame: one before anything is drawn, and one right after the world – which is
+ * where Voxy renders – so the HUD and the chat start from a state the game actually agrees with.
  */
 @Mixin(GameRenderer.class)
 public class GameRendererMixin {
