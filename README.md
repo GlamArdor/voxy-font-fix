@@ -1,6 +1,6 @@
 # Voxy Font Fix
 
-A client-side Fabric mod for Minecraft 1.21.8 that fixes the broken text you get when Voxy is
+A client-side Fabric mod for Minecraft 1.21.8 and 26.3 that fixes the broken text you get when Voxy is
 installed: letters that disappear after a resource pack load, or come back as a block of coloured
 noise. Cyrillic suffers the most, and reloading the pack fixes it only sometimes. Nothing is ever
 logged, because from OpenGL's point of view nothing went wrong.
@@ -96,6 +96,27 @@ against vanilla only: no dependency on Voxy, no mixin into it, nothing to update
 ```
 
 The jar lands in `build/libs/`.
+
+### 26.x
+
+From 26.1 the game ships unobfuscated, needs Java 25 and the renderer moved to
+`com.mojang.renderpearl`, so 26.3 is a separate source tree in `versions/26` with its own jar
+(`voxy-font-fix-<version>+26.jar`). The binding cache is the same, and Voxy 0.2.20 still binds
+around it: its own cleanup after rendering goes through the cache and gets skipped, leaving one of
+its textures on a unit the game believes is empty.
+
+`versions/26` also has a client game test that walks into a world with the real Voxy and Sodium
+(drop their jars into `versions/26/libs/`, Voxy's bundled jars unpacked into `libs/nested`):
+
+```
+cd versions/26
+./gradlew runClientGameTest             # with the fix
+./gradlew runClientGameTest -Ppassive   # fix switched off, audit still on
+```
+
+It writes what the audit saw to `build/run/clientGameTest/voxyfontfix-test-*.txt`, along with
+screenshots. A "stale bind" line is the exact moment the bug bites: the cache skips a bind while
+the driver holds something else.
 
 ## Licence
 

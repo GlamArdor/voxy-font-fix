@@ -1,0 +1,75 @@
+plugins {
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+}
+
+version = "${project.mod_version}+26"
+group = project.maven_group
+
+base {
+	archivesName = project.archives_base_name
+}
+
+loom {
+	accessWidenerPath = file("src/main/resources/voxyfontfix.accesswidener")
+
+	runs {
+		configureEach {
+			// Development only: report every unit where the driver and GlStateManager disagree.
+			vmArg "-Dvoxyfontfix.audit=true"
+			if (project.hasProperty("passive")) {
+				// Leaves the GL state alone, so the bug itself can be watched happening.
+				vmArg "-Dvoxyfontfix.passive=true"
+			}
+		}
+	}
+}
+
+// src/gametest: a client game test that walks into a world with Voxy running and checks the bindings
+// (./gradlew runClientGameTest, add -Ppassive to watch the bug with the fix switched off).
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = "voxyfontfix-test"
+		enableGameTests = false
+		enableClientGameTests = true
+		eula = true
+	}
+}
+
+dependencies {
+	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+	// No Fabric API dependency in the mod itself: the fix is pure mixins over vanilla renderpearl,
+	// so it stays loadable in any pack that has Voxy in it. Fabric API is here for the dev client
+	// and the game test only.
+	localRuntime "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+	gametestImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+	// Voxy and Sodium for the dev client, so the bug is reproduced against the real thing. Drop
+	// your own jars into libs/ (Voxy's bundled libraries unpacked into libs/nested): a jar pulled in
+	// with files() never gets its nested jars unpacked. None of it ends up in the built jar.
+	localRuntime fileTree(dir: "libs", include: ["voxy-*.jar", "sodium-*.jar"])
+	localRuntime fileTree(dir: "libs/nested", include: "*.jar")
+}
+
+processResources {
+	inputs.property "version", project.version
+	inputs.property "minecraft_range", project.minecraft_range
+
+	filesMatching("fabric.mod.json") {
+		expand "version": project.version, "minecraft_range": project.minecraft_range
+	}
+}
+
+tasks.withType(JavaCompile).configureEach {
+	it.options.release = 25
+	it.options.encoding = 'UTF-8'
+}
+
+java {
+	withSourcesJar()
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(25)
+	}
+}

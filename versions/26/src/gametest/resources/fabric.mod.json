@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "voxyfontfix-test",
+  "version": "1.0.0",
+  "name": "Voxy Font Fix game test",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": [
+      "com.glamardor.voxyfontfix.test.BindingsGameTest"
+    ]
+  },
+  "depends": {
+    "voxyfontfix": "*"
+  }
+}

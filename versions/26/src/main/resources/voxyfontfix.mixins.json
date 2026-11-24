@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.glamardor.voxyfontfix.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "client": [
+    "GameRendererMixin",
+    "GlCommandEncoderMixin",
+    "GlStateManagerMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

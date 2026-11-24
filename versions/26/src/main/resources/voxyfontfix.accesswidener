@@ -1,0 +1,9 @@
+accessWidener	v2	official
+
+# GlStateManager keeps a shadow copy of the bound texture of every texture unit and skips the
+# real glBindTexture call whenever it believes the texture is already bound. Voxy binds straight
+# through DSA (glBindTextureUnit), so that shadow copy goes stale and vanilla uploads land on the
+# wrong texture. To put the real GL state back in sync we have to read the shadow copy.
+accessible	class	com/mojang/renderpearl/backend/opengl/GlStateManager$TextureState
+accessible	field	com/mojang/renderpearl/backend/opengl/GlStateManager	TEXTURES	[Lcom/mojang/renderpearl/backend/opengl/GlStateManager$TextureState;
+accessible	field	com/mojang/renderpearl/backend/opengl/GlStateManager	activeTexture	I
